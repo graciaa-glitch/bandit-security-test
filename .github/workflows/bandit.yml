@@ -1,0 +1,34 @@
+name: Analyse sécurité avec Bandit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  bandit_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Cloner le dépôt
+      uses: actions/checkout@v4
+
+    - name: Installer Python et Bandit
+      run: |
+        python3 -m pip install --upgrade pip
+        pip install bandit
+
+    - name: Lancer l'analyse Bandit
+      run: |
+        bandit -r . -lll --exit-zero > resultats_bandit.txt
+        cat resultats_bandit.txt
+
+    - name: Échouer si vulnérabilité HIGH trouvée
+      run: |
+        if grep -q "Severity: HIGH" resultats_bandit.txt; then
+          echo "❌ Vulnérabilités HIGH détectées !"
+          exit 1
+        else
+          echo "✅ Aucun problème de sévérité HIGH."
+        fi
