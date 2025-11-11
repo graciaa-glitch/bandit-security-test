@@ -1,6 +1,8 @@
-# vuln_eval.py
-# Bandit détecte l'usage d'eval() comme dangereux
-user_input = "2 + 2"
-# simulate untrusted input -> usage dangereux
-result = eval(user_input)
-print("Result:", result)
+import subprocess
+
+# Vulnérabilité : utilisation dangereuse de shell=True
+subprocess.call('ls -l', shell=True)
+
+# Vulnérabilité : mot de passe en dur
+password = "123456"
+print("Mot de passe :", password)
