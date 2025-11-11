@@ -1,4 +1,4 @@
-name: Analyse sécurité avec Bandit
+name: 🔒 Analyse de sécurité avec Bandit
 
 on:
   push:
@@ -7,28 +7,47 @@ on:
     branches: [ main ]
 
 jobs:
-  bandit_scan:
+  bandit-scan:
+    name: 🧠 Analyse statique du code avec Bandit
     runs-on: ubuntu-latest
 
     steps:
-    - name: Cloner le dépôt
-      uses: actions/checkout@v4
+      # Étape 1 : Cloner le dépôt
+      - name: 📥 Cloner le dépôt
+        uses: actions/checkout@v4
 
-    - name: Installer Python et Bandit
-      run: |
-        python3 -m pip install --upgrade pip
-        pip install bandit
+      # Étape 2 : Installer Python
+      - name: 🐍 Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: Lancer l'analyse Bandit
-      run: |
-        bandit -r . -lll --exit-zero > resultats_bandit.txt
-        cat resultats_bandit.txt
+      # Étape 3 : Installer Bandit
+      - name: 🔧 Installer Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
 
-    - name: Échouer si vulnérabilité HIGH trouvée
-      run: |
-        if grep -q "Severity: HIGH" resultats_bandit.txt; then
-          echo "❌ Vulnérabilités HIGH détectées !"
-          exit 1
-        else
-          echo "✅ Aucun problème de sévérité HIGH."
-        fi
+      # Étape 4 : Lancer l’analyse Bandit
+      - name: 🔍 Exécuter Bandit sur le code
+        run: |
+          bandit -r . -f json -o bandit-report.json || true
+
+      # Étape 5 : Vérifier les vulnérabilités de niveau HIGH
+      - name: 🚫 Échec si vulnérabilités HIGH trouvées
+        run: |
+          high_count=$(cat bandit-report.json | jq '.results | map(select(.issue_severity=="HIGH")) | length')
+          echo "Nombre de vulnérabilités HIGH détectées : $high_count"
+          if [ "$high_count" -gt 0 ]; then
+            echo "❌ Échec : des vulnérabilités HIGH ont été détectées !"
+            exit 1
+          else
+            echo "✅ Aucun problème critique détecté."
+          fi
+
+      # Étape 6 : Sauvegarder le rapport en artefact
+      - name: 📦 Sauvegarder le rapport Bandit
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-bandit
+          path: bandit-report.json
